@@ -57,7 +57,11 @@ pipeline {
     }
 }
 SECURITY GROOVY CODE EXAMPLE 
-ARCHITECTURE
+
+
+
+ARCHITECTURE:-
+
 
   [ Jenkins Agent ] (Runs inside Private VPC)
                │
