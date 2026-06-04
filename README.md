@@ -57,3 +57,15 @@ pipeline {
     }
 }
 SECURITY GROOVY CODE EXAMPLE 
+ARCHITECTURE
+
+  [ Jenkins Agent ] (Runs inside Private VPC)
+               │
+      ┌────────┴────────┬───────────────────┐
+      ▼                 ▼                   ▼
+[ GitLeaks ]      [ Semgrep OSS ]     [ OWASP Dependency-Check ]
+(Local Scan)       (Local Rules)       (Local Database Mirror)
+      │                 │                   │
+      └────────┬────────┴───────────────────┘
+               ▼
+   [ DefectDojo Vulnerability Portal ] (Self-Hosted On-Premise)
