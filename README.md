@@ -73,3 +73,7 @@ ARCHITECTURE:-
       └────────┬────────┴───────────────────┘
                ▼
    [ DefectDojo Vulnerability Portal ] (Self-Hosted On-Premise)
+
+
+   TEACH ME SUPPOSE I'M A EMPLOYEE AND WHAT AND HOW SHOULD I BE HANDLING THE COMPANY PIPELINE ONCE I HAVE BEEN ASSIGNED TO A TEAM
+   
