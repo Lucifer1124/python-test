@@ -1,10 +1,10 @@
 pipeline {
     agent any
     environment {
-        DOCKER_USER = 'lucifer1124'
-        IMAGE_NAME  = 'flask-web-app'
-        IMAGE_ID    = "${env.BUILD_NUMBER}"
-        DOCKER_CRED = credentials('docker-cred') 
+        DOCKER_USER  = 'lucifer1124'
+        IMAGE_NAME   = 'flask-web-app'
+        IMAGE_ID     = "${env.BUILD_NUMBER}"
+        DOCKER_CRED  = credentials('docker-cred') 
     }
     
     triggers {
@@ -47,12 +47,23 @@ pipeline {
             }
         }
         
-        stage('Final run and deploy') {
+        stage('Kubernetes Deploy') {
             steps {
-            
-                sh "docker stop ${IMAGE_NAME}-container || true"
-                sh "docker rm ${IMAGE_NAME}-container || true"
-                sh "docker run -d --name ${IMAGE_NAME}-container -p 4000:4000 ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_ID}"
+                echo 'Deploying application to Kubernetes Cluster...'
+                
+                // Safely bindings our Jenkins secret file to a temporary environment variable path
+                withCredentials([file(credentialsId: 'k8s-config', variable: 'KUBECONFIG')]) {
+                    
+                    //Swap placeholder with our newly built image string dynamically
+                    sh "sed -i 's|LUCIFER_IMAGE_PLACEHOLDER|${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_ID}|g' k8s-deployment.yaml"
+                    
+                    //Apply both configurations using our secure kubeconfig reference
+                    sh "kubectl apply -f k8s-deployment.yaml --kubeconfig=\$KUBECONFIG"
+                    sh "kubectl apply -f k8s-service.yaml --kubeconfig=\$KUBECONFIG"
+                    
+                    // Monitor the rolling update status to confirm success
+                    sh "kubectl rollout status deployment/flask-web-deployment --kubeconfig=\$KUBECONFIG"
+                }
             }
         }
     }
