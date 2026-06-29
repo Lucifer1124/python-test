@@ -2,24 +2,26 @@ first in Linux terminal:-
 docker swarm init
 
 docker-compose.swarm.yml:-
-version: '3.8'
-services:
-  flask-app:
-    # Swarm will substitute these automatically from your Jenkins environment
-    image: ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_ID}
-    ports:
-      - "4000:4000"
-    deploy:
-      replicas: 3  # Keeps 3 instances running simultaneously for high availability
-      update_config:
-        parallelism: 1  # Updates containers one at a time
-        delay: 5s       # Waits 5 seconds between updating each container
-      restart_policy:
-        condition: on-failure
+
+  version: '3.8'
+  services:
+    flask-app:
+      # Swarm will substitute these automatically from your Jenkins environment
+      image: ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_ID}
+      ports:
+        - "4000:4000"
+      deploy:
+        replicas: 3  # Keeps 3 instances running simultaneously for high availability
+        update_config:
+          parallelism: 1  # Updates containers one at a time
+          delay: 5s       # Waits 5 seconds between updating each container
+        restart_policy:
+          condition: on-failure
         
 updated Jenkinsfile:-
 
-pipeline {
+
+    pipeline {
     agent any
     environment {
         DOCKER_USER = 'lucifer1124'
@@ -27,7 +29,6 @@ pipeline {
         IMAGE_ID    = "${env.BUILD_NUMBER}"
         DOCKER_CRED = credentials('docker-cred') 
     }
-    
     triggers {
         cron('H/5 * * * *')
     }
