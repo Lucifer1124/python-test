@@ -1,0 +1,25 @@
+Step 2: before Jenkinsfile writeup
+Save your Cluster kubeconfig in Jenkins:
+Instead of storing your master cluster password inside the code repo, we upload your cluster configuration file securely to Jenkins:
+
+Copy the contents of your Kubernetes configuration file (usually found at ~/.kube/config).
+
+Go to Jenkins Dashboard ➔ Manage Jenkins ➔ Credentials ➔ Global.
+
+Click Add Credentials.
+
+Kind: Select Secret file.
+
+File: Upload or paste the text of your config file.
+
+ID: Name it exactly k8s-config. Click Save.
+
+finally at last:-
+# Verify all 3 replicas are running
+kubectl get pods -l app=flask-web-app
+
+# Check the status of your NodePort network layer
+kubectl get service flask-web-service
+
+# Stream logs from the live application cluster pods
+kubectl logs -l app=flask-web-app --tail=20
