@@ -1,25 +1,117 @@
-Step 2: before Jenkinsfile writeup
-Save your Cluster kubeconfig in Jenkins:
-Instead of storing your master cluster password inside the code repo, we upload your cluster configuration file securely to Jenkins:
+Install VB:
+sudo apt update
+sudo apt install -y virtualbox
+vboxmanage --version
 
-Copy the contents of your Kubernetes configuration file (usually found at ~/.kube/config).
+2 big hashicorp commands
 
-Go to Jenkins Dashboard ➔ Manage Jenkins ➔ Credentials ➔ Global.
+Update & install Vagrant:
+sudo apt update
+sudo apt install -y vagrant
+vagrant --version
 
-Click Add Credentials.
+Create project folder:
+mkdir docker-swarm-vms
+cd docker-swarm-vms
+nano Vagrantfile
 
-Kind: Select Secret file.
+now replace the content with:-
 
-File: Upload or paste the text of your config file.
+Vagrant.configure("2") do |config|
+ config.vm.box = "ubuntu/jammy64"
+ # Swarm Manager
+ config.vm.define "manager-vm" do |manager|
+ manager.vm.hostname = "manager-vm"
+ manager.vm.network "private_network", ip: "192.168.56.10"
+ manager.vm.provider "virtualbox" do |vb|
+ vb.memory = 2048
+ vb.cpus = 2
+ end
+ end
+ # Worker 1
+ config.vm.define "worker1-vm" do |worker1|
+ worker1.vm.hostname = "worker1-vm"
+ worker1.vm.network "private_network", ip: "192.168.56.11"
+ worker1.vm.provider "virtualbox" do |vb|
+ vb.memory = 1024
+ vb.cpus = 1
+ end
+ end
+ # Worker 2
+ config.vm.define "worker2-vm" do |worker2|
+ worker2.vm.hostname = "worker2-vm"
+ worker2.vm.network "private_network", ip: "192.168.56.12"
+ worker2.vm.provider "virtualbox" do |vb|
+ vb.memory = 1024
+ vb.cpus = 1
+ end
+ end
+end
 
-ID: Name it exactly k8s-config. Click Save.
+then save exit :-> vagrant up
+if error:
+Blacklist KVM modules
+sudo nano /etc/modprobe.d/blacklist-kvm.conf
+Add:
+blacklist kvm
+blacklist kvm_intel
+blacklist kvm_amd
+Save & exit.
+Update initramfs and reboot
+sudo update-initramfs -u
+sudo reboot
+After reboot:
+lsmod | grep kvm
+output: should show nothing.
+Then retry
+cd ~/docker-swarm-vms
+vagrant up
 
-finally at last:-
-# Verify all 3 replicas are running
-kubectl get pods -l app=flask-web-app
+vagrant status
 
-# Check the status of your NodePort network layer
-kubectl get service flask-web-service
+vagrant ssh manager-vm
+to run worker1 open Worker1 terminal 
+cd ~/docker-swarm-vms
+Worker 1:
+vagrant ssh worker1-vm
+same for worker 2
 
-# Stream logs from the live application cluster pods
-kubectl logs -l app=flask-web-app --tail=20
+Inside each VM:
+sudo apt update
+sudo apt install -y docker.io
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+logout
+Re-login:
+vagrant ssh //vmname//
+
+Run Swarm on manager:
+docker swarm init --advertise-addr 192.168.56.10
+Copy the worker join token and paste it in the workers respectively
+Verify:
+docker node ls
+
+Join Workers to Swarm:
+On worker1-vm
+docker swarm join \--token SWMTKN-1-xxxx \192.168.56.10:2377  ///whatever we got on doing the init
+same for worker 2
+
+Verify Full Cluster:
+On manager-vm:
+docker node ls
+
+Test with a Service
+docker service create --name web --replicas 3 -p 5000:5000 
+docker service ps web
+
+Access from host:
+http://192.168.56.10:8080
+
+Stop / Delete Everything: 
+vagrant halt # stop VMs if you want to halt one vm only the vagrant halt <vm name>
+vagrant destroy -f # delete VMs
+Note: to show the fault tolerance you can halt the manager node, before exiting or halting you
+need to promote one or all worker nodes to manager then exit
+docker node promote <NODE_ID_OR_HOSTNAME>
+Docker node promote worker1-vm worker2-vm

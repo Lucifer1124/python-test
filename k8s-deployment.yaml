@@ -1,21 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
-  name: flask-web-deployment
-  labels:
-    app: flask-web-app
+  name: flask-deployment
+
 spec:
-  replicas: 3 # Keeps 3 replicas running for high availability
+  replicas: 2
+
   selector:
     matchLabels:
-      app: flask-web-app
+      app: flask-app
+
   template:
     metadata:
       labels:
-        app: flask-web-app
+        app: flask-app
+
     spec:
       containers:
-      - name: flask-web-container
-        image: LUCIFER_IMAGE_PLACEHOLDER # Jenkins will replace this with the real image tag
+      - name: flask-container
+        image: yourdockerhub/flask-app:latest
+
         ports:
-        - containerPort: 4000
+        - containerPort: 5000
